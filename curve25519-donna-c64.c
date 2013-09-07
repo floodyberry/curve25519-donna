@@ -22,6 +22,11 @@
  * from the sample implementation.
  */
 
+#ifdef DISTINGUISH_NAMES
+#define curve25519_donna curve25519_donna_c64
+#define curve25519_donna_raw curve25519_donna_c64_raw
+#endif
+
 #define AGGRESSIVE_INLINING
 
 #if defined(__ICC)
