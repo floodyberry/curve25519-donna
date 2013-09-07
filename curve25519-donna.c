@@ -39,14 +39,14 @@
   #include <stdint.h>
   #if defined(AGGRESSIVE_INLINING)
     #undef OPTIONAL_INLINE
-    #define OPTIONAL_INLINE __attribute__((always_inline))
+    #define OPTIONAL_INLINE inline __attribute__((always_inline))
   #endif
 #endif
 
 typedef uint32_t bignum25519[10];
 
 /* out = in */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_copy(bignum25519 out, const bignum25519 in) {
   out[0] = in[0];
   out[1] = in[1];
@@ -61,7 +61,7 @@ curve25519_copy(bignum25519 out, const bignum25519 in) {
 }
 
 /* out = a + b */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
   out[0] = a[0] + b[0];
   out[1] = a[1] + b[1];
@@ -77,7 +77,7 @@ curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 
 /* out = a - b */
 #define curve25519_sub_reduce curve25519_sub
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
   uint32_t c;
   out[0] = 0x7ffffda + a[0] - b[0]    ; c = (out[0] >> 26); out[0] &= 0x3ffffff;
@@ -94,7 +94,7 @@ curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 }
 
 /* out = in * scalar */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_scalar_product(bignum25519 out, const bignum25519 in, const uint32_t scalar) {
   uint64_t a;
   uint32_t c;
@@ -112,7 +112,7 @@ curve25519_scalar_product(bignum25519 out, const bignum25519 in, const uint32_t 
 }
 
 /* out = a * b */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_mul(bignum25519 out, const bignum25519 a, const bignum25519 b) {
   uint32_t r0,r1,r2,r3,r4,r5,r6,r7,r8,r9;
   uint32_t s0,s1,s2,s3,s4,s5,s6,s7,s8,s9;
@@ -216,7 +216,7 @@ curve25519_mul_noinline(bignum25519 out, const bignum25519 a, const bignum25519 
 
 
 /* out = in*in */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_square(bignum25519 out, const bignum25519 in) {
   uint32_t r0,r1,r2,r3,r4,r5,r6,r7,r8,r9;
   uint32_t d6,d7,d8,d9;
@@ -477,7 +477,7 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
  * Maybe swap the contents of two bignum25519 arrays (@a and @b), each 5 elements
  * long. Perform the swap iff @swap is non-zero.
  */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint32_t iswap) {
   const uint32_t swap = (uint32_t)(-(int32_t)iswap);
   uint32_t x0,x1,x2,x3,x4,x5,x6,x7,x8,x9;

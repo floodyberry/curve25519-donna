@@ -30,7 +30,7 @@
   #include <stdint.h>
   #if defined(AGGRESSIVE_INLINING)
     #undef OPTIONAL_INLINE
-    #define OPTIONAL_INLINE __attribute__((always_inline))
+    #define OPTIONAL_INLINE inline __attribute__((always_inline))
   #endif
   #define MM16 __attribute__((aligned(16)))
 #endif
@@ -85,7 +85,7 @@ static const packedelem32 MM16 packed32zeromodp0 = {{0x7ffffda,0x7ffffda,0x3ffff
 static const packedelem32 MM16 packed32zeromodp1 = {{0x7fffffe,0x7fffffe,0x3fffffe,0x3fffffe}};
 
 /* Copy a bignum to another: out = in */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_copy_sse2(bignum25519sse2 out, const bignum25519sse2 in) {
   xmmi x0,x1,x2;
   x0 = _mm_load_si128((xmmi*)in + 0);
@@ -97,7 +97,7 @@ curve25519_copy_sse2(bignum25519sse2 out, const bignum25519sse2 in) {
 }
 
 /* Take a little-endian, 32-byte number and expand it into polynomial form */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_expand_sse2(bignum25519sse2 out, const unsigned char in[32]) {
   #define F(n,start,shift,mask) \
     out[n] = \
@@ -125,7 +125,7 @@ curve25519_expand_sse2(bignum25519sse2 out, const unsigned char in[32]) {
 /* Take a fully reduced polynomial form number and contract it into a
  * little-endian, 32-byte array
  */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_contract_sse2(unsigned char out[32], const bignum25519sse2 in) {
   MM16 bignum25519sse2 f;
   curve25519_copy_sse2(f, in);
@@ -210,7 +210,7 @@ curve25519_contract_sse2(unsigned char out[32], const bignum25519sse2 in) {
  * Maybe swap the contents of two felem arrays (@a and @b), each 5 elements
  * long. Perform the swap iff @swap is non-zero.
  */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_swap_conditional_sse2(bignum25519sse2 a, bignum25519sse2 b, uint32_t iswap) {
   const uint32_t swap = (uint32_t)(-(int32_t)iswap);
   xmmi a0,a1,a2,b0,b1,b2,x0,x1,x2;
@@ -244,7 +244,7 @@ curve25519_swap_conditional_sse2(bignum25519sse2 a, bignum25519sse2 b, uint32_t 
 }
 
 /* interleave two bignums */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_tangle32(packedelem32 *out, const bignum25519sse2 x, const bignum25519sse2 z) {
   xmmi x0,x1,x2,z0,z1,z2;
 
@@ -263,7 +263,7 @@ curve25519_tangle32(packedelem32 *out, const bignum25519sse2 x, const bignum2551
 }
 
 /* split a packed bignum in to it's two parts */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_untangle64(bignum25519sse2 x, bignum25519sse2 z, const packedelem64 *in) {
   _mm_store_si128((xmmi *)(x + 0), _mm_unpacklo_epi64(_mm_unpacklo_epi32(in[0].v, in[1].v), _mm_unpacklo_epi32(in[2].v, in[3].v)));
   _mm_store_si128((xmmi *)(x + 4), _mm_unpacklo_epi64(_mm_unpacklo_epi32(in[4].v, in[5].v), _mm_unpacklo_epi32(in[6].v, in[7].v)));
@@ -274,7 +274,7 @@ curve25519_untangle64(bignum25519sse2 x, bignum25519sse2 z, const packedelem64 *
 }
 
 /* add two packed bignums */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_add_packed32_sse2(packedelem32 *out, const packedelem32 *r, const packedelem32 *s) {
   out[0].v = _mm_add_epi32(r[0].v, s[0].v);
   out[1].v = _mm_add_epi32(r[1].v, s[1].v);
@@ -284,7 +284,7 @@ curve25519_add_packed32_sse2(packedelem32 *out, const packedelem32 *r, const pac
 }
 
 /* subtract two packed bignums */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_sub_packed32_sse2(packedelem32 *out, const packedelem32 *r, const packedelem32 *s) {
   xmmi r0,r1,r2,r3,r4;
   xmmi s0,s1,s2,s3,s4,s5;
@@ -295,18 +295,18 @@ curve25519_sub_packed32_sse2(packedelem32 *out, const packedelem32 *r, const pac
   r2 = _mm_add_epi32(r[2].v, packed32zeromodp1.v);
   r3 = _mm_add_epi32(r[3].v, packed32zeromodp1.v);
   r4 = _mm_add_epi32(r[4].v, packed32zeromodp1.v);
-  r0 = _mm_sub_epi32(r0, s[0].v); // 00 11
-  r1 = _mm_sub_epi32(r1, s[1].v); // 22 33
-  r2 = _mm_sub_epi32(r2, s[2].v); // 44 55
-  r3 = _mm_sub_epi32(r3, s[3].v); // 66 77
-  r4 = _mm_sub_epi32(r4, s[4].v); // 88 99
+  r0 = _mm_sub_epi32(r0, s[0].v); /* 00 11 */
+  r1 = _mm_sub_epi32(r1, s[1].v); /* 22 33 */
+  r2 = _mm_sub_epi32(r2, s[2].v); /* 44 55 */
+  r3 = _mm_sub_epi32(r3, s[3].v); /* 66 77 */
+  r4 = _mm_sub_epi32(r4, s[4].v); /* 88 99 */
 
-  s0 = _mm_unpacklo_epi64(r0, r2); // 00 44
-  s1 = _mm_unpackhi_epi64(r0, r2); // 11 55
-  s2 = _mm_unpacklo_epi64(r1, r3); // 22 66
-  s3 = _mm_unpackhi_epi64(r1, r3); // 33 77
-  s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  // 00 88
-  s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  // 00 99
+  s0 = _mm_unpacklo_epi64(r0, r2); /* 00 44 */
+  s1 = _mm_unpackhi_epi64(r0, r2); /* 11 55 */
+  s2 = _mm_unpacklo_epi64(r1, r3); /* 22 66 */
+  s3 = _mm_unpackhi_epi64(r1, r3); /* 33 77 */
+  s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  /* 00 88 */
+  s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  /* 00 99 */
 
   c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
   c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); s4 = _mm_add_epi32(s4, _mm_unpackhi_epi64(_mm_setzero_si128(), c2)); s0 = _mm_add_epi32(s0, _mm_unpacklo_epi64(_mm_setzero_si128(), c2));
@@ -314,15 +314,15 @@ curve25519_sub_packed32_sse2(packedelem32 *out, const packedelem32 *r, const pac
   c1 = _mm_srli_epi32(s3, 25); c2 = _mm_srli_epi32(s5, 25); s3 = _mm_and_si128(s3, packedmask25252525.v); s5 = _mm_and_si128(s5, packedmask25252525.v); s4 = _mm_add_epi32(s4, c1); s0 = _mm_add_epi32(s0, _mm_or_si128(_mm_slli_si128(c1, 8), _mm_srli_si128(_mm_add_epi32(_mm_add_epi32(_mm_slli_epi32(c2, 4), _mm_slli_epi32(c2, 1)), c2), 8)));
   c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 
-  out[0].v = _mm_unpacklo_epi64(s0, s1); // 00 11
-  out[1].v = _mm_unpacklo_epi64(s2, s3); // 22 33
-  out[2].v = _mm_unpackhi_epi64(s0, s1); // 44 55
-  out[3].v = _mm_unpackhi_epi64(s2, s3); // 66 77
-  out[4].v = _mm_unpackhi_epi64(s4, s5); // 88 99
+  out[0].v = _mm_unpacklo_epi64(s0, s1); /* 00 11 */
+  out[1].v = _mm_unpacklo_epi64(s2, s3); /* 22 33 */
+  out[2].v = _mm_unpackhi_epi64(s0, s1); /* 44 55 */
+  out[3].v = _mm_unpackhi_epi64(s2, s3); /* 66 77 */
+  out[4].v = _mm_unpackhi_epi64(s4, s5); /* 88 99 */
 }
 
 /* multiply two packed bignums */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_mul_packed64_sse2(packedelem64 *out, const packedelem64 *r, const packedelem64 *s) {
   xmmi r1,r2,r3,r4,r5,r6,r7,r8,r9;
   xmmi r1_2,r3_2,r5_2,r7_2,r9_2;
@@ -529,7 +529,7 @@ typedef struct bignum25519sse2mulprecomp_t {
 } bignum25519sse2mulprecomp;
 
 /* precompute a constant to multiply by */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_mul_sse2_precomp(bignum25519sse2mulprecomp *pre, const bignum25519sse2 r) {
   pre->r0 = _mm_load_si128((xmmi*)r + 0);
   pre->r1 = _mm_shuffle_epi32(pre->r0, _MM_SHUFFLE(1,1,1,1));
@@ -563,7 +563,7 @@ curve25519_mul_sse2_precomp(bignum25519sse2mulprecomp *pre, const bignum25519sse
 
 
 /* multiply a bignum by a pre-computed constant */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_mul_precomp_sse2(bignum25519sse2 out, const bignum25519sse2 s, const bignum25519sse2mulprecomp *r) {
   xmmi m01,m23,m45,m67,m89;
   xmmi m0123,m4567;
@@ -802,7 +802,7 @@ curve25519_square_times_sse2(bignum25519sse2 r, const bignum25519sse2 in, int co
 }
 
 /* square two packed bignums */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_square_packed64_sse2(packedelem64 *out, const packedelem64 *r) {
   xmmi r0,r1,r2,r3;
   xmmi r1_2,r3_2,r4_2,r5_2,r6_2,r7_2;
@@ -861,7 +861,7 @@ curve25519_square_packed64_sse2(packedelem64 *out, const packedelem64 *r) {
 }
 
 /* make [nqx+nqz,nqpqx+nqpqz], [nqpqx-nqpqz,nqx-nqz] from [nqx+nqz,nqpqx+nqpqz], [nqx-nqz,nqpqx-nqpqz] */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_make_nqpq(packedelem64 *primex, packedelem64 *primez, const packedelem32 *pqx, const packedelem32 *pqz) {
   primex[0].v = _mm_shuffle_epi32(pqx[0].v, _MM_SHUFFLE(1,1,0,0));
   primex[1].v = _mm_shuffle_epi32(pqx[0].v, _MM_SHUFFLE(3,3,2,2));
@@ -886,7 +886,7 @@ curve25519_make_nqpq(packedelem64 *primex, packedelem64 *primez, const packedele
 }
 
 /* make [nqx+nqz,nqx-nqz] from [nqx+nqz,nqpqx+nqpqz], [nqx-nqz,nqpqx-nqpqz] */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_make_nq(packedelem64 *nq, const packedelem32 *pqx, const packedelem32 *pqz) {
   nq[0].v = _mm_unpacklo_epi64(pqx[0].v, pqz[0].v);
   nq[1].v = _mm_unpackhi_epi64(pqx[0].v, pqz[0].v);
@@ -901,7 +901,7 @@ curve25519_make_nq(packedelem64 *nq, const packedelem32 *pqx, const packedelem32
 }
 
 /* compute [x+z,x-z] from [x,z] */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_addsub_packed64_sse2(packedelem64 *r)  {
   packed32bignum25519sse2 x,z,add,sub;
 
@@ -932,7 +932,7 @@ curve25519_addsub_packed64_sse2(packedelem64 *r)  {
 }
 
 /* compute [x,z] * [121666,121665] */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_121665_packed64_sse2(packedelem64 *out, const packedelem64 *in) {
   xmmi c1,c2;
 
@@ -957,7 +957,7 @@ curve25519_121665_packed64_sse2(packedelem64 *out, const packedelem64 *in) {
 }
 
 /* compute [sq.x,sqscalar.x-sqscalar.z] * [sq.z,sq.x-sq.z] */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_final_nq(packedelem64 *nq, const packedelem64 *sq, const packedelem64 *sq121665) {
   packed32bignum25519sse2 x, z, sub;
   packed64bignum25519sse2 t, nqa, nqb;
@@ -1015,7 +1015,7 @@ curve25519_final_nq(packedelem64 *nq, const packedelem64 *sq, const packedelem64
  * In:  b =   2^5 - 2^0
  * Out: b = 2^250 - 2^0
  */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_pow_two5mtwo0_two250mtwo0_sse2(bignum25519sse2 b) {
   MM16 bignum25519sse2 t0,c;
 
@@ -1039,7 +1039,7 @@ curve25519_pow_two5mtwo0_two250mtwo0_sse2(bignum25519sse2 b) {
 /*
  * z^(p - 2) = z(2^255 - 21)
  */
-static inline void OPTIONAL_INLINE
+static OPTIONAL_INLINE void
 curve25519_recip_sse2(bignum25519sse2 out, const bignum25519sse2 z) {
   MM16 bignum25519sse2 a,t0,b;
 
