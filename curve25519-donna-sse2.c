@@ -14,6 +14,11 @@
 
 #include <string.h>
 
+#ifdef DISTINGUISH_NAMES
+#define curve25519_donna curve25519_donna_sse2
+#define curve25519_donna_raw curve25519_donna_sse2_raw
+#endif
+
 #define AGGRESSIVE_INLINING
 
 #if defined(_MSC_VER)
