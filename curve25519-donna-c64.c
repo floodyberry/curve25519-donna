@@ -29,69 +29,84 @@
 
 #define AGGRESSIVE_INLINING
 
-#if defined(__ICC)
-  #define COMPILER_INTEL
-#endif
-#if defined(__PATHCC__)
-  #define COMPILER_PATHCC
-#endif
-
 #if defined(_MSC_VER)
   #define COMPILER_MSVC
   #include <intrin.h>
   #include <string.h>
-  #if defined(AGGRESSIVE_INLINING)
-    #undef OPTIONAL_INLINE
-    #define OPTIONAL_INLINE __forceinline
-  #endif
+  #define ALWAYS_INLINE __forceinline
   typedef unsigned char uint8_t;
   typedef unsigned __int64 uint64_t;
   typedef signed __int64 int64_t;
-  struct uint128 {
-    uint64_t lo, hi;
-  };
-  typedef struct uint128 uint128_t;
+#endif
+
+#if defined(__clang__)
+  #define COMPILER_CLANG ((__clang_major__ * 10000) + (__clang_minor__ * 100) + (__clang_patchlevel__))
+#endif
+
+#if defined(__GNUC__)
+  #if (__GNUC__ >= 3)
+    #define COMPILER_GCC ((__GNUC__ * 10000) + (__GNUC_MINOR__ * 100) + (__GNUC_PATCHLEVEL__))
+  #else
+    #define COMPILER_GCC ((__GNUC__ * 10000) + (__GNUC_MINOR__ * 100))
+  #endif
+  #include <string.h>
+  #include <stdint.h>
+  #define ALWAYS_INLINE inline __attribute__((always_inline))
+
+  #if (defined(COMPILER_CLANG) && (COMPILER_CLANG >= 30100)) || defined(__SIZEOF_INT128__)
+    #define HAVE_NATIVE_UINT128
+    typedef unsigned __int128 uint128_t;
+  #elif !defined(COMPILER_CLANG) && (COMPILER_GCC >= 40400)
+    #define HAVE_NATIVE_UINT128
+    typedef unsigned uint128_t __attribute__((mode(TI)));
+  #endif
+#endif
+
+#if defined(HAVE_NATIVE_UINT128)
+  #define HAVE_UINT128
+  #define mul64x64_128(out,a,b) out = (uint128_t)a * b;
+  #define shr128_pair(out,hi,lo,shift) out = (uint64_t)((((uint128_t)hi << 64) | lo) >> shift);
+  #define shr128(out,in,shift) out = (uint64_t)(in >> shift);
+  #define add128(a,b) a += b;
+  #define add128_64(a,b) a += b;
+  #define lo128(a) ((uint64_t)a)
+#endif
+
+#if !defined(HAVE_UINT128) && (defined(COMPILER_MSVC) && defined(_WIN64))
+  #define HAVE_UINT128
+  typedef struct uint128_t { uint64_t lo, hi; } uint128_t;
   #define mul64x64_128(out,a,b) out.lo = _umul128(a,b,&out.hi);
   #define shr128_pair(out,hi,lo,shift) out = __shiftright128(lo, hi, shift);
   #define shr128(out,in,shift) shr128_pair(out, in.hi, in.lo, shift)
   #define add128(a,b) { uint64_t p = a.lo; a.lo += b.lo; a.hi += b.hi + (a.lo < p); }
   #define add128_64(a,b) { uint64_t p = a.lo; a.lo += b; a.hi += (a.lo < p); }
   #define lo128(a) (a.lo)
-#elif defined(__GNUC__)
-  #include <string.h>
-  #include <stdint.h>
-  #if defined(AGGRESSIVE_INLINING)
-    #undef OPTIONAL_INLINE
-    #define OPTIONAL_INLINE inline __attribute__((always_inline))
-  #endif
-  #if (defined(COMPILER_INTEL) || defined(COMPILER_PATHCC))
-    struct uint128 {
-      uint64_t lo, hi;
-    };
-    typedef struct uint128 uint128_t;
-    #define mul64x64_128(out,a,b) __asm__ ("mulq %3" : "=a" (out.lo), "=d" (out.hi) : "a" (a), "rm" (b));
-    #define shr128_pair(out,hi,lo,shift) __asm__ ("shrdq %3,%2,%0" : "=r" (lo) : "0" (lo), "r" (hi), "J" (shift)); out = lo;
-    #define shr128(out,in,shift) shr128_pair(out,in.hi, in.lo, shift)
-    #define add128(a,b) __asm__ ("addq %4,%2; adcq %5,%3" : "=r" (a.hi), "=r" (a.lo) : "1" (a.lo), "0" (a.hi), "rm" (b.lo), "rm" (b.hi) : "cc");
-    #define add128_64(a,b) __asm__ ("addq %4,%2; adcq $0,%3" : "=r" (a.hi), "=r" (a.lo) : "1" (a.lo), "0" (a.hi), "rm" (b) : "cc");
-    #define lo128(a) (a.lo)
-  #else
-    #define HAVE_NATIVE_UINT128
-    typedef unsigned uint128_t __attribute__((mode(TI)));
-    #define mul64x64_128(out,a,b) out = (uint128_t)a * b;
-    #define shr128_pair(out,hi,lo,shift) out = (uint64_t)((((uint128_t)hi << 64) | lo) >> shift);
-    #define shr128(out,in,shift) out = (uint64_t)(in >> shift);
-    #define add128(a,b) a += b;
-    #define add128_64(a,b) a += b;
-    #define lo128(a) ((uint64_t)a)
-  #endif
+#endif
+
+#if !defined(HAVE_UINT128) && (defined(COMPILER_GCC) && (defined(__amd64__) || defined(__amd64) || defined(__x86_64__ )))
+  #define HAVE_UINT128
+  typedef struct uint128_t { uint64_t lo, hi; } uint128_t;
+  #define mul64x64_128(out,a,b) __asm__ ("mulq %3" : "=a" (out.lo), "=d" (out.hi) : "a" (a), "rm" (b) : "cc");
+  #define shr128_pair(out,hi,lo,shift) __asm__ ("shrdq %3,%2,%0" : "=r" (lo) : "0" (lo), "r" (hi), "J" (shift) : "cc"); out = lo;
+  #define shr128(out,in,shift) shr128_pair(out, in.hi, in.lo, shift)
+  #define add128(a,b) __asm__ ("addq %4,%2; adcq %5,%3" : "=r" (a.hi), "=r" (a.lo) : "1" (a.lo), "0" (a.hi), "rm" (b.lo), "rm" (b.hi) : "cc");
+  #define add128_64(a,b) __asm__ ("addq %4,%2; adcq $0,%3" : "=r" (a.hi), "=r" (a.lo) : "1" (a.lo), "0" (a.hi), "rm" (b) : "cc");
+  #define lo128(a) (a.lo)
+#endif
+
+#if !defined(HAVE_UINT128)
+  #error Need a uint128_t implementation
+#endif
+
+#if defined(AGGRESSIVE_INLINING)
+  #define OPTIONAL_INLINE ALWAYS_INLINE
 #else
-  unsupported compiler
+  #define OPTIONAL_INLINE
 #endif
 
 typedef uint64_t bignum25519[5];
 
-static uint64_t reduce_mask_51 = 0x0007ffffffffffffull;
+static const uint64_t reduce_mask_51 = 0x0007ffffffffffffull;
 
 /* out = in */
 static OPTIONAL_INLINE void
