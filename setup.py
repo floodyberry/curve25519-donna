@@ -8,7 +8,7 @@ version = Popen(["git", "describe", "--tags"], stdout=PIPE).communicate()[0]\
 
 ext_modules = [Extension("curve25519._curve25519",
                          ["python-src/curve25519/curve25519module.c",
-                          "curve25519-donna.c"],
+                          "curve25519.c"],
                          )]
 
 short_description="Python wrapper for the Curve25519 cryptographic library"
