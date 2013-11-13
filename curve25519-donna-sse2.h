@@ -251,7 +251,7 @@ curve25519_add_packed32(packedelem32 *out, const packedelem32 *r, const packedel
 DONNA_INLINE static void
 curve25519_sub_packed32(packedelem32 *out, const packedelem32 *r, const packedelem32 *s) {
 	xmmi r0,r1,r2,r3,r4;
-	xmmi s0,s1,s2,s3,s4,s5;
+	xmmi s0,s1,s2,s3;
 	xmmi c1,c2;
 
 	r0 = _mm_add_epi32(r[0].v, packed32zeromodp0.v);
@@ -269,20 +269,15 @@ curve25519_sub_packed32(packedelem32 *out, const packedelem32 *r, const packedel
 	s1 = _mm_unpackhi_epi64(r0, r2); /* 11 55 */
 	s2 = _mm_unpacklo_epi64(r1, r3); /* 22 66 */
 	s3 = _mm_unpackhi_epi64(r1, r3); /* 33 77 */
-	s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  /* 00 88 */
-	s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  /* 00 99 */
 
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
-	c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); s4 = _mm_add_epi32(s4, _mm_unpackhi_epi64(_mm_setzero_si128(), c2)); s0 = _mm_add_epi32(s0, _mm_unpacklo_epi64(_mm_setzero_si128(), c2));
-	c1 = _mm_srli_epi32(s2, 26); c2 = _mm_srli_epi32(s4, 26); s2 = _mm_and_si128(s2, packedmask26262626.v); s4 = _mm_and_si128(s4, packedmask26262626.v); s3 = _mm_add_epi32(s3, c1); s5 = _mm_add_epi32(s5, c2);
-	c1 = _mm_srli_epi32(s3, 25); c2 = _mm_srli_epi32(s5, 25); s3 = _mm_and_si128(s3, packedmask25252525.v); s5 = _mm_and_si128(s5, packedmask25252525.v); s4 = _mm_add_epi32(s4, c1); s0 = _mm_add_epi32(s0, _mm_or_si128(_mm_slli_si128(c1, 8), _mm_srli_si128(_mm_add_epi32(_mm_add_epi32(_mm_slli_epi32(c2, 4), _mm_slli_epi32(c2, 1)), c2), 8)));
-	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
+	c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); r4 = _mm_add_epi32(r4, _mm_srli_si128(c2, 8)); s0 = _mm_add_epi32(s0,  _mm_slli_si128(c2, 8));
 
 	out[0].v = _mm_unpacklo_epi64(s0, s1); /* 00 11 */
 	out[1].v = _mm_unpacklo_epi64(s2, s3); /* 22 33 */
 	out[2].v = _mm_unpackhi_epi64(s0, s1); /* 44 55 */
 	out[3].v = _mm_unpackhi_epi64(s2, s3); /* 66 77 */
-	out[4].v = _mm_unpackhi_epi64(s4, s5); /* 88 99 */
+	out[4].v = r4;                         /* 88 99 */
 }
 
 /* multiply two packed bignums */
