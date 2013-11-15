@@ -21,6 +21,9 @@ typedef uint32_t bignum25519[10+2];
 typedef packedelem32 packed32bignum25519[5];
 typedef packedelem64 packed64bignum25519[10];
 
+static const uint32_t reduce_mask_26 = (1 << 26) - 1;
+static const uint32_t reduce_mask_25 = (1 << 25) - 1;
+
 static const packedelem32 sse2_bot32bitmask = {{0xffffffff, 0x00000000, 0xffffffff, 0x00000000}};
 static const packedelem32 sse2_top32bitmask = {{0x00000000, 0xffffffff, 0x00000000, 0xffffffff}};
 static const packedelem32 sse2_top64bitmask = {{0x00000000, 0x00000000, 0xffffffff, 0xffffffff}};
@@ -73,16 +76,16 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	x6 = *(uint32_t *)(in + 24);
 	x7 = *(uint32_t *)(in + 28);
 
-	out[0] = (                        x0       ) & 0x3ffffff;
-	out[1] = ((((uint64_t)x1 << 32) | x0) >> 26) & 0x1ffffff;
-	out[2] = ((((uint64_t)x2 << 32) | x1) >> 19) & 0x3ffffff;
-	out[3] = ((((uint64_t)x3 << 32) | x2) >> 13) & 0x1ffffff;
-	out[4] = ((                       x3) >>  6) & 0x3ffffff;
-	out[5] = (                        x4       ) & 0x1ffffff;
-	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & 0x3ffffff;
-	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & 0x1ffffff;
-	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & 0x3ffffff;
-	out[9] = ((                       x7) >>  6) & 0x1ffffff;
+	out[0] = (                        x0       ) & reduce_mask_26;
+	out[1] = ((((uint64_t)x1 << 32) | x0) >> 26) & reduce_mask_25;
+	out[2] = ((((uint64_t)x2 << 32) | x1) >> 19) & reduce_mask_26;
+	out[3] = ((((uint64_t)x3 << 32) | x2) >> 13) & reduce_mask_25;
+	out[4] = ((                       x3) >>  6) & reduce_mask_26;
+	out[5] = (                        x4       ) & reduce_mask_25;
+	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & reduce_mask_26;
+	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & reduce_mask_25;
+	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & reduce_mask_26;
+	out[9] = ((                       x7) >>  6) & reduce_mask_25;
 	out[10] = 0;
 	out[11] = 0;
 }
@@ -93,26 +96,27 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 DONNA_INLINE static void
 curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	bignum25519 ALIGN(16) f;
-	curve25519_copy(f, in);
 
+	curve25519_copy(f, in);
+	
 	#define carry_pass() \
-		f[1] += f[0] >> 26; f[0] &= 0x3ffffff; \
-		f[2] += f[1] >> 25; f[1] &= 0x1ffffff; \
-		f[3] += f[2] >> 26; f[2] &= 0x3ffffff; \
-		f[4] += f[3] >> 25; f[3] &= 0x1ffffff; \
-		f[5] += f[4] >> 26; f[4] &= 0x3ffffff; \
-		f[6] += f[5] >> 25; f[5] &= 0x1ffffff; \
-		f[7] += f[6] >> 26; f[6] &= 0x3ffffff; \
-		f[8] += f[7] >> 25; f[7] &= 0x1ffffff; \
-		f[9] += f[8] >> 26; f[8] &= 0x3ffffff;
+		f[1] += f[0] >> 26; f[0] &= reduce_mask_26; \
+		f[2] += f[1] >> 25; f[1] &= reduce_mask_25; \
+		f[3] += f[2] >> 26; f[2] &= reduce_mask_26; \
+		f[4] += f[3] >> 25; f[3] &= reduce_mask_25; \
+		f[5] += f[4] >> 26; f[4] &= reduce_mask_26; \
+		f[6] += f[5] >> 25; f[5] &= reduce_mask_25; \
+		f[7] += f[6] >> 26; f[6] &= reduce_mask_26; \
+		f[8] += f[7] >> 25; f[7] &= reduce_mask_25; \
+		f[9] += f[8] >> 26; f[8] &= reduce_mask_26;
 
 	#define carry_pass_full() \
 		carry_pass() \
-		f[0] += 19 * (f[9] >> 25); f[9] &= 0x1ffffff;
+		f[0] += 19 * (f[9] >> 25); f[9] &= reduce_mask_25;
 
 	#define carry_pass_final() \
 		carry_pass() \
-		f[9] &= 0x1ffffff;
+		f[9] &= reduce_mask_25;
 
 	carry_pass_full()
 	carry_pass_full()
