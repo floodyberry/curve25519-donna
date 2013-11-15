@@ -1,5 +1,8 @@
 typedef uint32_t bignum25519[10];
 
+static const uint32_t reduce_mask_26 = (1 << 26) - 1;
+static const uint32_t reduce_mask_25 = (1 << 25) - 1;
+
 /* out = in */
 DONNA_INLINE static void
 curve25519_copy(bignum25519 out, const bignum25519 in) {
@@ -34,16 +37,16 @@ curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 DONNA_INLINE static void
 curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	uint32_t c;
-	out[0] = 0x7ffffda + a[0] - b[0]    ; c = (out[0] >> 26); out[0] &= 0x3ffffff;
-	out[1] = 0x3fffffe + a[1] - b[1] + c; c = (out[1] >> 25); out[1] &= 0x1ffffff;
-	out[2] = 0x7fffffe + a[2] - b[2] + c; c = (out[2] >> 26); out[2] &= 0x3ffffff;
-	out[3] = 0x3fffffe + a[3] - b[3] + c; c = (out[3] >> 25); out[3] &= 0x1ffffff;
-	out[4] = 0x7fffffe + a[4] - b[4] + c; c = (out[4] >> 26); out[4] &= 0x3ffffff;
-	out[5] = 0x3fffffe + a[5] - b[5] + c; c = (out[5] >> 25); out[5] &= 0x1ffffff;
-	out[6] = 0x7fffffe + a[6] - b[6] + c; c = (out[6] >> 26); out[6] &= 0x3ffffff;
-	out[7] = 0x3fffffe + a[7] - b[7] + c; c = (out[7] >> 25); out[7] &= 0x1ffffff;
-	out[8] = 0x7fffffe + a[8] - b[8] + c; c = (out[8] >> 26); out[8] &= 0x3ffffff;
-	out[9] = 0x3fffffe + a[9] - b[9] + c; c = (out[9] >> 25); out[9] &= 0x1ffffff;
+	out[0] = 0x7ffffda + a[0] - b[0]    ; c = (out[0] >> 26); out[0] &= reduce_mask_26;
+	out[1] = 0x3fffffe + a[1] - b[1] + c; c = (out[1] >> 25); out[1] &= reduce_mask_25;
+	out[2] = 0x7fffffe + a[2] - b[2] + c; c = (out[2] >> 26); out[2] &= reduce_mask_26;
+	out[3] = 0x3fffffe + a[3] - b[3] + c; c = (out[3] >> 25); out[3] &= reduce_mask_25;
+	out[4] = 0x7fffffe + a[4] - b[4] + c; c = (out[4] >> 26); out[4] &= reduce_mask_26;
+	out[5] = 0x3fffffe + a[5] - b[5] + c; c = (out[5] >> 25); out[5] &= reduce_mask_25;
+	out[6] = 0x7fffffe + a[6] - b[6] + c; c = (out[6] >> 26); out[6] &= reduce_mask_26;
+	out[7] = 0x3fffffe + a[7] - b[7] + c; c = (out[7] >> 25); out[7] &= reduce_mask_25;
+	out[8] = 0x7fffffe + a[8] - b[8] + c; c = (out[8] >> 26); out[8] &= reduce_mask_26;
+	out[9] = 0x3fffffe + a[9] - b[9] + c; c = (out[9] >> 25); out[9] &= reduce_mask_25;
 	out[0] += 19 * c;
 }
 
@@ -52,16 +55,16 @@ DONNA_INLINE static void
 curve25519_scalar_product(bignum25519 out, const bignum25519 in, const uint32_t scalar) {
 	uint64_t a;
 	uint32_t c;
-	a = mul32x32_64(in[0], scalar);     out[0] = (uint32_t)a & 0x3ffffff; c = (uint32_t)(a >> 26);
-	a = mul32x32_64(in[1], scalar) + c; out[1] = (uint32_t)a & 0x1ffffff; c = (uint32_t)(a >> 25);
-	a = mul32x32_64(in[2], scalar) + c; out[2] = (uint32_t)a & 0x3ffffff; c = (uint32_t)(a >> 26);
-	a = mul32x32_64(in[3], scalar) + c; out[3] = (uint32_t)a & 0x1ffffff; c = (uint32_t)(a >> 25);
-	a = mul32x32_64(in[4], scalar) + c; out[4] = (uint32_t)a & 0x3ffffff; c = (uint32_t)(a >> 26);
-	a = mul32x32_64(in[5], scalar) + c; out[5] = (uint32_t)a & 0x1ffffff; c = (uint32_t)(a >> 25);
-	a = mul32x32_64(in[6], scalar) + c; out[6] = (uint32_t)a & 0x3ffffff; c = (uint32_t)(a >> 26);
-	a = mul32x32_64(in[7], scalar) + c; out[7] = (uint32_t)a & 0x1ffffff; c = (uint32_t)(a >> 25);
-	a = mul32x32_64(in[8], scalar) + c; out[8] = (uint32_t)a & 0x3ffffff; c = (uint32_t)(a >> 26);
-	a = mul32x32_64(in[9], scalar) + c; out[9] = (uint32_t)a & 0x1ffffff; c = (uint32_t)(a >> 25);
+	a = mul32x32_64(in[0], scalar);     out[0] = (uint32_t)a & reduce_mask_26; c = (uint32_t)(a >> 26);
+	a = mul32x32_64(in[1], scalar) + c; out[1] = (uint32_t)a & reduce_mask_25; c = (uint32_t)(a >> 25);
+	a = mul32x32_64(in[2], scalar) + c; out[2] = (uint32_t)a & reduce_mask_26; c = (uint32_t)(a >> 26);
+	a = mul32x32_64(in[3], scalar) + c; out[3] = (uint32_t)a & reduce_mask_25; c = (uint32_t)(a >> 25);
+	a = mul32x32_64(in[4], scalar) + c; out[4] = (uint32_t)a & reduce_mask_26; c = (uint32_t)(a >> 26);
+	a = mul32x32_64(in[5], scalar) + c; out[5] = (uint32_t)a & reduce_mask_25; c = (uint32_t)(a >> 25);
+	a = mul32x32_64(in[6], scalar) + c; out[6] = (uint32_t)a & reduce_mask_26; c = (uint32_t)(a >> 26);
+	a = mul32x32_64(in[7], scalar) + c; out[7] = (uint32_t)a & reduce_mask_25; c = (uint32_t)(a >> 25);
+	a = mul32x32_64(in[8], scalar) + c; out[8] = (uint32_t)a & reduce_mask_26; c = (uint32_t)(a >> 26);
+	a = mul32x32_64(in[9], scalar) + c; out[9] = (uint32_t)a & reduce_mask_25; c = (uint32_t)(a >> 25);
 	                                    out[0] += c * 19;
 }
 
@@ -138,17 +141,17 @@ curve25519_mul(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	m6 += (mul32x32_64(r9, s7) + mul32x32_64(r8, s8) + mul32x32_64(r7, s9));
 	m8 += (mul32x32_64(r9, s9));
 
-	                             r0 = (uint32_t)m0 & 0x3ffffff; c = (m0 >> 26);
-	m1 += c;                     r1 = (uint32_t)m1 & 0x1ffffff; c = (m1 >> 25);
-	m2 += c;                     r2 = (uint32_t)m2 & 0x3ffffff; c = (m2 >> 26);
-	m3 += c;                     r3 = (uint32_t)m3 & 0x1ffffff; c = (m3 >> 25);
-	m4 += c;                     r4 = (uint32_t)m4 & 0x3ffffff; c = (m4 >> 26);
-	m5 += c;                     r5 = (uint32_t)m5 & 0x1ffffff; c = (m5 >> 25);
-	m6 += c;                     r6 = (uint32_t)m6 & 0x3ffffff; c = (m6 >> 26);
-	m7 += c;                     r7 = (uint32_t)m7 & 0x1ffffff; c = (m7 >> 25);
-	m8 += c;                     r8 = (uint32_t)m8 & 0x3ffffff; c = (m8 >> 26);
-	m9 += c;                     r9 = (uint32_t)m9 & 0x1ffffff; p = (uint32_t)(m9 >> 25);
-	m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & 0x3ffffff; p = (uint32_t)(m0 >> 26);
+	                             r0 = (uint32_t)m0 & reduce_mask_26; c = (m0 >> 26);
+	m1 += c;                     r1 = (uint32_t)m1 & reduce_mask_25; c = (m1 >> 25);
+	m2 += c;                     r2 = (uint32_t)m2 & reduce_mask_26; c = (m2 >> 26);
+	m3 += c;                     r3 = (uint32_t)m3 & reduce_mask_25; c = (m3 >> 25);
+	m4 += c;                     r4 = (uint32_t)m4 & reduce_mask_26; c = (m4 >> 26);
+	m5 += c;                     r5 = (uint32_t)m5 & reduce_mask_25; c = (m5 >> 25);
+	m6 += c;                     r6 = (uint32_t)m6 & reduce_mask_26; c = (m6 >> 26);
+	m7 += c;                     r7 = (uint32_t)m7 & reduce_mask_25; c = (m7 >> 25);
+	m8 += c;                     r8 = (uint32_t)m8 & reduce_mask_26; c = (m8 >> 26);
+	m9 += c;                     r9 = (uint32_t)m9 & reduce_mask_25; p = (uint32_t)(m9 >> 25);
+	m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & reduce_mask_26; p = (uint32_t)(m0 >> 26);
 	r1 += p;
 
 	out[0] = r0;
@@ -219,17 +222,17 @@ curve25519_square(bignum25519 out, const bignum25519 in) {
 	m7 += (mul32x32_64(d9, r8    ));
 	m8 += (mul32x32_64(d9, r9    ));
 
-	                             r0 = (uint32_t)m0 & 0x3ffffff; c = (m0 >> 26);
-	m1 += c;                     r1 = (uint32_t)m1 & 0x1ffffff; c = (m1 >> 25);
-	m2 += c;                     r2 = (uint32_t)m2 & 0x3ffffff; c = (m2 >> 26);
-	m3 += c;                     r3 = (uint32_t)m3 & 0x1ffffff; c = (m3 >> 25);
-	m4 += c;                     r4 = (uint32_t)m4 & 0x3ffffff; c = (m4 >> 26);
-	m5 += c;                     r5 = (uint32_t)m5 & 0x1ffffff; c = (m5 >> 25);
-	m6 += c;                     r6 = (uint32_t)m6 & 0x3ffffff; c = (m6 >> 26);
-	m7 += c;                     r7 = (uint32_t)m7 & 0x1ffffff; c = (m7 >> 25);
-	m8 += c;                     r8 = (uint32_t)m8 & 0x3ffffff; c = (m8 >> 26);
-	m9 += c;                     r9 = (uint32_t)m9 & 0x1ffffff; p = (uint32_t)(m9 >> 25);
-	m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & 0x3ffffff; p = (uint32_t)(m0 >> 26);
+	                             r0 = (uint32_t)m0 & reduce_mask_26; c = (m0 >> 26);
+	m1 += c;                     r1 = (uint32_t)m1 & reduce_mask_25; c = (m1 >> 25);
+	m2 += c;                     r2 = (uint32_t)m2 & reduce_mask_26; c = (m2 >> 26);
+	m3 += c;                     r3 = (uint32_t)m3 & reduce_mask_25; c = (m3 >> 25);
+	m4 += c;                     r4 = (uint32_t)m4 & reduce_mask_26; c = (m4 >> 26);
+	m5 += c;                     r5 = (uint32_t)m5 & reduce_mask_25; c = (m5 >> 25);
+	m6 += c;                     r6 = (uint32_t)m6 & reduce_mask_26; c = (m6 >> 26);
+	m7 += c;                     r7 = (uint32_t)m7 & reduce_mask_25; c = (m7 >> 25);
+	m8 += c;                     r8 = (uint32_t)m8 & reduce_mask_26; c = (m8 >> 26);
+	m9 += c;                     r9 = (uint32_t)m9 & reduce_mask_25; p = (uint32_t)(m9 >> 25);
+	m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & reduce_mask_26; p = (uint32_t)(m0 >> 26);
 	r1 += p;
 
 	out[0] = r0;
@@ -294,17 +297,17 @@ curve25519_square_times(bignum25519 out, const bignum25519 in, int count) {
 		m7 += (mul32x32_64(d9, r8    ));
 		m8 += (mul32x32_64(d9, r9    ));
 
-		                             r0 = (uint32_t)m0 & 0x3ffffff; c = (m0 >> 26);
-		m1 += c;                     r1 = (uint32_t)m1 & 0x1ffffff; c = (m1 >> 25);
-		m2 += c;                     r2 = (uint32_t)m2 & 0x3ffffff; c = (m2 >> 26);
-		m3 += c;                     r3 = (uint32_t)m3 & 0x1ffffff; c = (m3 >> 25);
-		m4 += c;                     r4 = (uint32_t)m4 & 0x3ffffff; c = (m4 >> 26);
-		m5 += c;                     r5 = (uint32_t)m5 & 0x1ffffff; c = (m5 >> 25);
-		m6 += c;                     r6 = (uint32_t)m6 & 0x3ffffff; c = (m6 >> 26);
-		m7 += c;                     r7 = (uint32_t)m7 & 0x1ffffff; c = (m7 >> 25);
-		m8 += c;                     r8 = (uint32_t)m8 & 0x3ffffff; c = (m8 >> 26);
-		m9 += c;                     r9 = (uint32_t)m9 & 0x1ffffff; p = (uint32_t)(m9 >> 25);
-		m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & 0x3ffffff; p = (uint32_t)(m0 >> 26);
+		                             r0 = (uint32_t)m0 & reduce_mask_26; c = (m0 >> 26);
+		m1 += c;                     r1 = (uint32_t)m1 & reduce_mask_25; c = (m1 >> 25);
+		m2 += c;                     r2 = (uint32_t)m2 & reduce_mask_26; c = (m2 >> 26);
+		m3 += c;                     r3 = (uint32_t)m3 & reduce_mask_25; c = (m3 >> 25);
+		m4 += c;                     r4 = (uint32_t)m4 & reduce_mask_26; c = (m4 >> 26);
+		m5 += c;                     r5 = (uint32_t)m5 & reduce_mask_25; c = (m5 >> 25);
+		m6 += c;                     r6 = (uint32_t)m6 & reduce_mask_26; c = (m6 >> 26);
+		m7 += c;                     r7 = (uint32_t)m7 & reduce_mask_25; c = (m7 >> 25);
+		m8 += c;                     r8 = (uint32_t)m8 & reduce_mask_26; c = (m8 >> 26);
+		m9 += c;                     r9 = (uint32_t)m9 & reduce_mask_25; p = (uint32_t)(m9 >> 25);
+		m0 = r0 + mul32x32_64(p,19); r0 = (uint32_t)m0 & reduce_mask_26; p = (uint32_t)(m0 >> 26);
 		r1 += p;
 	} while (--count);
 
@@ -353,16 +356,16 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 		#undef F
 	}
 
-	out[0] = (                        x0       ) & 0x3ffffff;
-	out[1] = ((((uint64_t)x1 << 32) | x0) >> 26) & 0x1ffffff;
-	out[2] = ((((uint64_t)x2 << 32) | x1) >> 19) & 0x3ffffff;
-	out[3] = ((((uint64_t)x3 << 32) | x2) >> 13) & 0x1ffffff;
-	out[4] = ((                       x3) >>  6) & 0x3ffffff;
-	out[5] = (                        x4       ) & 0x1ffffff;
-	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & 0x3ffffff;
-	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & 0x1ffffff;
-	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & 0x3ffffff;
-	out[9] = ((                       x7) >>  6) & 0x1ffffff;
+	out[0] = (                        x0       ) & reduce_mask_26;
+	out[1] = ((((uint64_t)x1 << 32) | x0) >> 26) & reduce_mask_25;
+	out[2] = ((((uint64_t)x2 << 32) | x1) >> 19) & reduce_mask_26;
+	out[3] = ((((uint64_t)x3 << 32) | x2) >> 13) & reduce_mask_25;
+	out[4] = ((                       x3) >>  6) & reduce_mask_26;
+	out[5] = (                        x4       ) & reduce_mask_25;
+	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & reduce_mask_26;
+	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & reduce_mask_25;
+	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & reduce_mask_26;
+	out[9] = ((                       x7) >>  6) & reduce_mask_25;
 }
 
 /* Take a fully reduced polynomial form number and contract it into a little-endian, 32-byte array */
@@ -372,23 +375,23 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	curve25519_copy(f, in);
 
 	#define carry_pass() \
-		f[1] += f[0] >> 26; f[0] &= 0x3ffffff; \
-		f[2] += f[1] >> 25; f[1] &= 0x1ffffff; \
-		f[3] += f[2] >> 26; f[2] &= 0x3ffffff; \
-		f[4] += f[3] >> 25; f[3] &= 0x1ffffff; \
-		f[5] += f[4] >> 26; f[4] &= 0x3ffffff; \
-		f[6] += f[5] >> 25; f[5] &= 0x1ffffff; \
-		f[7] += f[6] >> 26; f[6] &= 0x3ffffff; \
-		f[8] += f[7] >> 25; f[7] &= 0x1ffffff; \
-		f[9] += f[8] >> 26; f[8] &= 0x3ffffff;
+		f[1] += f[0] >> 26; f[0] &= reduce_mask_26; \
+		f[2] += f[1] >> 25; f[1] &= reduce_mask_25; \
+		f[3] += f[2] >> 26; f[2] &= reduce_mask_26; \
+		f[4] += f[3] >> 25; f[3] &= reduce_mask_25; \
+		f[5] += f[4] >> 26; f[4] &= reduce_mask_26; \
+		f[6] += f[5] >> 25; f[5] &= reduce_mask_25; \
+		f[7] += f[6] >> 26; f[6] &= reduce_mask_26; \
+		f[8] += f[7] >> 25; f[7] &= reduce_mask_25; \
+		f[9] += f[8] >> 26; f[8] &= reduce_mask_26;
 
 	#define carry_pass_full() \
 		carry_pass() \
-		f[0] += 19 * (f[9] >> 25); f[9] &= 0x1ffffff;
+		f[0] += 19 * (f[9] >> 25); f[9] &= reduce_mask_25;
 
 	#define carry_pass_final() \
 		carry_pass() \
-		f[9] &= 0x1ffffff;
+		f[9] &= reduce_mask_25;
 
 	carry_pass_full()
 	carry_pass_full()
