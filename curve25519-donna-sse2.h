@@ -145,34 +145,14 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	#undef carry_full
 	#undef carry_final
 
-	f[1] <<= 2;
-	f[2] <<= 3;
-	f[3] <<= 5;
-	f[4] <<= 6;
-	f[6] <<= 1;
-	f[7] <<= 3;
-	f[8] <<= 4;
-	f[9] <<= 6;
-
-	#define F(i, s) \
-		out[s+0] |= (unsigned char )(f[i] & 0xff); \
-		out[s+1] = (unsigned char )((f[i] >> 8) & 0xff); \
-		out[s+2] = (unsigned char )((f[i] >> 16) & 0xff); \
-		out[s+3] = (unsigned char )((f[i] >> 24) & 0xff);
-
-	out[0] = 0;
-	out[16] = 0;
-	F(0,0);
-	F(1,3);
-	F(2,6);
-	F(3,9);
-	F(4,12);
-	F(5,16);
-	F(6,19);
-	F(7,22);
-	F(8,25);
-	F(9,28);
-	#undef F
+	*(uint32_t *)(out +  0) = ((f[0]      ) | (f[1] << 26));
+	*(uint32_t *)(out +  4) = ((f[1] >>  6) | (f[2] << 19));
+	*(uint32_t *)(out +  8) = ((f[2] >> 13) | (f[3] << 13));
+	*(uint32_t *)(out + 12) = ((f[3] >> 19) | (f[4] <<  6));
+	*(uint32_t *)(out + 16) = ((f[5]      ) | (f[6] << 25));
+	*(uint32_t *)(out + 20) = ((f[6] >>  7) | (f[7] << 19));
+	*(uint32_t *)(out + 24) = ((f[7] >> 13) | (f[8] << 12));
+	*(uint32_t *)(out + 28) = ((f[8] >> 20) | (f[9] <<  6));
 }
 
 /*
