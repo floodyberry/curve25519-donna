@@ -47,6 +47,10 @@ static const packedelem64 packed9638 = {{19*4,19*2}};
 static const packedelem64 packed121666121665 = {{121666, 121665}};
 
 /* 2*(2^255 - 19) = 0 mod p */
+static const packedelem32 packed2p0 = {{0x7ffffda,0x3fffffe,0x7fffffe,0x3fffffe}};
+static const packedelem32 packed2p1 = {{0x7fffffe,0x3fffffe,0x7fffffe,0x3fffffe}};
+static const packedelem32 packed2p2 = {{0x7fffffe,0x3fffffe,0x0000000,0x0000000}};
+
 static const packedelem32 packed32zeromodp0 = {{0x7ffffda,0x7ffffda,0x3fffffe,0x3fffffe}};
 static const packedelem32 packed32zeromodp1 = {{0x7fffffe,0x7fffffe,0x3fffffe,0x3fffffe}};
 
@@ -844,6 +848,53 @@ curve25519_make_nq(packedelem64 *nq, const packedelem32 *pqx, const packedelem32
 	nq[8].v = _mm_unpacklo_epi64(pqx[4].v, pqz[4].v);
 	nq[9].v = _mm_unpackhi_epi64(pqx[4].v, pqz[4].v);
 }
+
+/* compute [nqx+nqz,nqx-nqz] from nqx, nqz */
+DONNA_INLINE static void
+curve25519_compute_nq(packedelem64 *nq, const bignum25519 nqx, const bignum25519 nqz) {
+	xmmi x0,x1,x2;
+	xmmi z0,z1,z2;
+	xmmi a0,a1,a2;
+	xmmi s0,s1,s2;
+	xmmi r0,r1;
+	xmmi c1,c2;
+	x0 = _mm_load_si128((xmmi*)nqx + 0);
+	x1 = _mm_load_si128((xmmi*)nqx + 1);
+	x2 = _mm_load_si128((xmmi*)nqx + 2);
+	z0 = _mm_load_si128((xmmi*)nqz + 0);
+	z1 = _mm_load_si128((xmmi*)nqz + 1);
+	z2 = _mm_load_si128((xmmi*)nqz + 2);
+	a0 = _mm_add_epi32(x0, z0);
+	a1 = _mm_add_epi32(x1, z1);
+	a2 = _mm_add_epi32(x2, z2);
+	s0 = _mm_add_epi32(x0, packed2p0.v);
+	s1 = _mm_add_epi32(x1, packed2p1.v);
+	s2 = _mm_add_epi32(x2, packed2p2.v);
+	s0 = _mm_sub_epi32(s0, z0);
+	s1 = _mm_sub_epi32(s1, z1);
+	s2 = _mm_sub_epi32(s2, z2);
+	r0 = _mm_and_si128(_mm_shuffle_epi32(s0, _MM_SHUFFLE(2,2,0,0)), sse2_bot32bitmask.v);
+	r1 = _mm_and_si128(_mm_shuffle_epi32(s0, _MM_SHUFFLE(3,3,1,1)), sse2_bot32bitmask.v);
+	c1 = _mm_srli_epi32(r0, 26);
+	c2 = _mm_srli_epi32(r1, 25);
+	r0 = _mm_and_si128(r0, packedmask26.v);
+	r1 = _mm_and_si128(r1, packedmask25.v);
+	r0 = _mm_add_epi32(r0, _mm_slli_si128(c2, 8));
+	r1 = _mm_add_epi32(r1, c1);
+	s0 = _mm_unpacklo_epi64(_mm_unpacklo_epi32(r0, r1), _mm_unpackhi_epi32(r0, r1));
+	s1 = _mm_add_epi32(s1, _mm_srli_si128(c2, 8));
+	nq[0].v = _mm_unpacklo_epi64(a0, s0);
+	nq[2].v = _mm_unpackhi_epi64(a0, s0);
+	nq[4].v = _mm_unpacklo_epi64(a1, s1);
+	nq[6].v = _mm_unpackhi_epi64(a1, s1);
+	nq[8].v = _mm_unpacklo_epi64(a2, s2);
+	nq[1].v = _mm_shuffle_epi32(nq[0].v, _MM_SHUFFLE(3,3,1,1));
+	nq[3].v = _mm_shuffle_epi32(nq[2].v, _MM_SHUFFLE(3,3,1,1));
+	nq[5].v = _mm_shuffle_epi32(nq[4].v, _MM_SHUFFLE(3,3,1,1));
+	nq[7].v = _mm_shuffle_epi32(nq[6].v, _MM_SHUFFLE(3,3,1,1));
+	nq[9].v = _mm_shuffle_epi32(nq[8].v, _MM_SHUFFLE(3,3,1,1));
+}
+
 
 /* compute [x+z,x-z] from [x,z] */
 DONNA_INLINE static void

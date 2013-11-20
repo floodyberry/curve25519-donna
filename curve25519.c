@@ -25,9 +25,3 @@ CURVE25519_FN(curve25519_donna_basepoint) (curve25519_key mypublic, const curve2
 	static const curve25519_key basepoint = {9};
 	CURVE25519_FN(curve25519_donna)(mypublic, secret, basepoint);
 }
-
-void
-CURVE25519_FN(curve25519_donna_raw) (curve25519_key mypublic, const curve25519_key secret, const curve25519_key basepoint) {
-	curve25519_scalarmult_donna(mypublic, secret, basepoint);
-}
-
