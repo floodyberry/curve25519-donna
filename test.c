@@ -46,7 +46,7 @@ curveassert_equal_round(const unsigned char *a, const unsigned char *b, size_t l
 
 
 /* result of the curve25519 scalarmult |((|max| * |max|) * |max|)... 1024 times| * basepoint */
-const curve25519_key curve25519_expected = {
+static const curve25519_key curve25519_expected = {
 	0x8e,0x74,0xac,0x44,0x38,0xa6,0x87,0x54,
 	0xc8,0xc6,0x1b,0xa0,0x8b,0xd2,0xf7,0x7b,
 	0xbb,0xc6,0x26,0xd5,0x24,0xb3,0xbe,0xa0,
@@ -63,6 +63,14 @@ const curve25519_key curve25519_expected = {
 };
 */
 
+/* shared key resulting from the private keys |max| and |mid| */
+static const curve25519_key curve25519_shared = {
+	0x78,0x0e,0x63,0xa6,0x58,0x5c,0x6d,0x56,
+	0xf1,0xa0,0x18,0x2d,0xec,0xe6,0x96,0x3b,
+	0x5b,0x4d,0x63,0x08,0x7b,0xf9,0x19,0x0e,
+	0x3a,0x77,0xf5,0x27,0x9c,0xd7,0x8b,0x44
+};
+
 
 static void
 test_main(void) {
@@ -73,14 +81,28 @@ test_main(void) {
 		255,255,255,255,255,255,255,255,
 		255,255,255,255,255,255,255,255
 	};
+	static const curve25519_key mid = {
+		127,127,127,127,127,127,127,127,
+		127,127,127,127,127,127,127,127,
+		127,127,127,127,127,127,127,127,
+		127,127,127,127,127,127,127,127
+	};
 	curve25519_key pk[2];
+	curve25519_key shared[2];
 	uint64_t ticks, curveticks = maxticks;
 
 	curve25519_donna(pk[0], max, max);
 	for (i = 0; i < 1023; i++)
 		curve25519_donna(pk[(i & 1) ^ 1], pk[i & 1], max);
 	curve25519_donna_basepoint(pk[0], pk[1]);
-	curveassert_equal(curve25519_expected, pk[0], sizeof(curve25519_key), "curve25519 test failed to generate correct value");
+	curveassert_equal(curve25519_expected, pk[0], sizeof(curve25519_key), "curve25519 sanity test failed to generate correct value");
+
+	curve25519_donna_basepoint(pk[0], max);
+	curve25519_donna_basepoint(pk[1], mid);
+	curve25519_donna(shared[0], max, pk[1]);
+	curve25519_donna(shared[1], mid, pk[0]);
+	curveassert_equal(curve25519_shared, shared[0], sizeof(curve25519_key), "curve25519 failed to generate the same shared key (1)");
+	curveassert_equal(curve25519_shared, shared[1], sizeof(curve25519_key), "curve25519 failed to generate the same shared key (2)");
 
 	for (i = 0; i < 2048; i++) {
 		timeit(curve25519_donna(pk[1], pk[0], max), curveticks);
