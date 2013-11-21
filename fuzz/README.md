@@ -21,8 +21,12 @@ Optional parameters:
 
     Default: gcc
 
+* `--out=filename`
+
+    Filename to write to. Default is fuzz-curve25519
+
 example:
-    
+
     php build-nix.php --bits=64 --with-sse2 --compiler=icc 
 
 ## Windows
@@ -41,8 +45,8 @@ its "Properties/Preprocessor/Preprocessor Definitions" option.
 
 # Running
 
-If everything agrees, the program will only output occasional status dots (every 0x1000 passes) 
-and a 64bit progress count (every 0x20000 passes):
+If everything agrees, the program will only output occasional status dots (every 0x100 passes) 
+and a 64bit progress count (every 0x2000 passes):
 
     fuzzing:  ref10 curve25519 curve25519-sse2
     
