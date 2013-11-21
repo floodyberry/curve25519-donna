@@ -365,7 +365,7 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & reduce_mask_26;
 	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & reduce_mask_25;
 	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & reduce_mask_26;
-	out[9] = ((                       x7) >>  6) & reduce_mask_25;
+	out[9] = ((                       x7) >>  6) & reduce_mask_26; /* ref impl accepts the 256th bit */
 }
 
 /* Take a fully reduced polynomial form number and contract it into a little-endian, 32-byte array */

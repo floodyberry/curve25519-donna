@@ -1,6 +1,7 @@
 typedef uint64_t bignum25519[5];
 
 static const uint64_t reduce_mask_51 = ((uint64_t)1 << 51) - 1;
+static const uint64_t reduce_mask_52 = ((uint64_t)1 << 52) - 1;
 
 /* out = in */
 DONNA_INLINE static void
@@ -262,7 +263,7 @@ curve25519_expand(bignum25519 out, const unsigned char *in) {
 	out[1] = x0 & reduce_mask_51; x1 = (x1 >> 38) | (x2 << 26);
 	out[2] = x1 & reduce_mask_51; x2 = (x2 >> 25) | (x3 << 39);
 	out[3] = x2 & reduce_mask_51; x3 = (x3 >> 12);
-	out[4] = x3 & reduce_mask_51;
+	out[4] = x3 & reduce_mask_52; /* ref impl accepts the 256th bit */
 }
 
 /* Take a fully reduced polynomial form number and contract it into a
