@@ -166,12 +166,6 @@ curve25519_mul(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[9] = r9;
 }
 
-DONNA_NOINLINE static void
-curve25519_mul_noinline(bignum25519 out, const bignum25519 a, const bignum25519 b) {
-	curve25519_mul(out, a, b);
-}
-
-
 /* out = in * in */
 DONNA_INLINE static void
 curve25519_square(bignum25519 out, const bignum25519 in) {

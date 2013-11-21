@@ -10,14 +10,6 @@
 #include "test-ticks.h"
 
 static void
-curveassert(int check, int round, const char *failreason) {
-	if (check)
-		return;
-	printf("round %d, %s\n", round, failreason);
-	exit(1);
-}
-
-static void
 curveassert_die(const unsigned char *a, const unsigned char *b, size_t len, int round, const char *failreason) {
 	size_t i;
 	if (round > 0)
@@ -36,14 +28,6 @@ curveassert_equal(const unsigned char *a, const unsigned char *b, size_t len, co
 		return;
 	curveassert_die(a, b, len, -1, failreason);
 }
-
-static void
-curveassert_equal_round(const unsigned char *a, const unsigned char *b, size_t len, int round, const char *failreason) {
-	if (memcmp(a, b, len) == 0)
-		return;
-	curveassert_die(a, b, len, round, failreason);
-}
-
 
 /* result of the curve25519 scalarmult |((|max| * |max|) * |max|)... 1024 times| * basepoint */
 static const curve25519_key curve25519_expected = {
