@@ -45,7 +45,7 @@ curve25519_scalarmult_donna(curve25519_key mypublic, const curve25519_key n, con
 	};
 
 	/* it's possible to get rid of this swap with the swap in the above loop 
-	   at the bottom instead of the top, but compilers seem to this way */
+	   at the bottom instead of the top, but compilers seem to optimize better this way */
 	curve25519_swap_conditional(nqx, nqpqx, bit);
 	curve25519_swap_conditional(nqz, nqpqz, bit);
 

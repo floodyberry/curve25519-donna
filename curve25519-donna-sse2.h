@@ -89,7 +89,13 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	out[6] = ((((uint64_t)x5 << 32) | x4) >> 25) & reduce_mask_26;
 	out[7] = ((((uint64_t)x6 << 32) | x5) >> 19) & reduce_mask_25;
 	out[8] = ((((uint64_t)x7 << 32) | x6) >> 12) & reduce_mask_26;
-	out[9] = ((                       x7) >>  6) & reduce_mask_25;
+	out[9] = ((                       x7) >>  6)                 ;
+
+	/* ref impl allows the 256th bit to be set, but sub can cause overflows in laters squares due to 
+	   out[9] not being reduced, so carry over to out[0] */
+	out[0] += (out[9] >> 25) * 19;
+	out[9] &= reduce_mask_25;
+
 	out[10] = 0;
 	out[11] = 0;
 }
